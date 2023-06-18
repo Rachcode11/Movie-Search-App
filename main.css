@@ -208,6 +208,21 @@ img{
 .btn:hover{
     cursor: pointer;
 }
+.result-btn{
+    background-color: var(--yellow-color);
+    padding: 0.4rem;
+    margin: 0 0.6rem;
+    margin-top: 2%;
+    border-radius: 13px;
+    font-weight: 600;
+    color: #fff;
+
+}
+
+#additional-details{
+    /* background-color: red; */
+    display: none;
+}
 
 
 @media(max-width: 450px){
