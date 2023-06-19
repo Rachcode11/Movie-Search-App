@@ -2,18 +2,21 @@ const movieSearchBox = document.getElementById("movie-search-box");
 const movieSearchButton = document.getElementById("movie-search-btn");
 const searchList = document.getElementById("search-list");
 const resultGrid = document.getElementById("result-grid");
-let viewDetailsBtn;
+const nav = document.getElementById("nav");
 
+let movieResults = []
+let pageIndex = 0;
+let itemsPerPage = 3;
 
-
-function loadMovies(searchTerm, page) {
-  const URL = `https://www.omdbapi.com/?s=${searchTerm}&page=${page}&apikey=a1fa53b9`;
+function loadMovies(searchTerm) {
+  const URL = `https://www.omdbapi.com/?s=${searchTerm}&page=&apikey=a1fa53b9`;
   fetch(URL)
     .then((res) => res.json())
     .then((data) => {
       if (data.Response === "True") {
-        displayMovieList(data.Search);
-        totalPages = Math.ceil(data.totalResults / 10);
+        movieResults = data.Search;
+        displayMovieList();
+        loadPageNav();
       } else {
         displayErrorMessage("No results found.");
       }
@@ -28,7 +31,6 @@ function displayErrorMessage(message) {
   searchList.innerHTML = `<p class="error-message">${message}</p>`;
 }
 
-
 movieSearchButton.addEventListener("click", function () {
   const searchTerm = movieSearchBox.value.trim();
   if (searchTerm.length > 0) {
@@ -39,28 +41,55 @@ movieSearchButton.addEventListener("click", function () {
   }
 });
 
-function displayMovieList(movies) {
+function displayMovieList() {
+  const startIndex = pageIndex * itemsPerPage;
+  const endIndex = startIndex + itemsPerPage;
+  const displayedMovies = movieResults.slice(startIndex, endIndex);
+
   searchList.innerHTML = "";
-  for (let i = 0; i < movies.length; i++) {
+  displayedMovies.forEach((movie) => {
     const movieListItem = document.createElement("div");
-    movieListItem.dataset.id = movies[i].imdbID;
+    movieListItem.dataset.id = movie.imdbID;
     movieListItem.classList.add("search-list-item");
-    const moviePoster = movies[i].Poster !== "N/A" ? movies[i].Poster : "no-image-found.jpg";
+    const moviePoster = movie.Poster !== "N/A" ? movie.Poster : "no-image-found.jpg";
 
     movieListItem.innerHTML = `
       <div class="search-item-thumbnail">
         <img src=${moviePoster} />
       </div>
       <div class="search-item-info">
-        <h3>${movies[i].Title}</h3>
-        <p>${movies[i].Year}</p>
+        <h3>${movie.Title}</h3>
+        <p>${movie.Year}</p>
       </div>
     `;
 
     searchList.appendChild(movieListItem);
-  }
+  });
+
   loadMovieDetails();
 }
+function loadPageNav() {
+  nav.innerHTML = "";
+  const totalPages = Math.ceil(movieResults.length / itemsPerPage);
+
+  for (let i = 1; i <= totalPages; i++) {
+    const span = document.createElement("span");
+    span.textContent = i;
+    span.addEventListener("click", (e) => {
+      pageIndex = e.target.textContent - 1;
+      displayMovieList();
+      const spans = document.querySelectorAll("#nav span");
+      spans.forEach((span) => span.classList.remove("active"));
+      e.target.classList.add("active");
+    });
+    if (i === 1) {
+      span.classList.add("active");
+    }
+
+    nav.appendChild(span);
+  }
+}
+
 
 function loadMovieDetails() {
   const searchListMovies = searchList.querySelectorAll(".search-list-item");
@@ -90,46 +119,25 @@ function displayMovieDetails(details) {
         <li class="released">Released: ${details.Released}</li>
       </ul>
       <div id="additional-details">
-      <p class="genre"><b>Genre:</b>${details.Genre}</p>
+        <p class="genre"><b>Genre:</b>${details.Genre}</p>
         <p class="writer"><b>Writer:</b>${details.Writer}</p>
         <p class="actors"><b>Actor:</b>${details.Actors}</p>
-        <p class="plot">
-          <b>Plot:</b>${details.Plot}</p>
-        </p>
+        <p class="plot"><b>Plot:</b>${details.Plot}</p>
         <p class="language"><b>Language:</b>${details.Language}</p>
-        <p class="awards">
-          <b><i class="fas fa-award"></i></b>${details.Awards}</p>
-        </p>
-        </div>
+        <p class="awards"><b><i class="fas fa-award"></i></b>${details.Awards}</p>
+      </div>
       <div class="result-display-btn">
-        <button class="result-btn" id="view-details-btn">
-          View details
-        </button>
+        <button class="result-btn" id="view-details-btn">View details</button>
       </div>
     </div>
   `;
 
-  viewDetailsBtn = document.getElementById("view-details-btn");
-  let additional = document.getElementById("additional-details");
+  const viewDetailsBtn = document.getElementById("view-details-btn");
+  const additionalDetails = document.getElementById("additional-details");
 
   viewDetailsBtn.addEventListener("click", function () {
-    if (additional.style.display === "none") {
-      additional.style.display = "block";
-    }else{
-      additional.style.display = "none"
-    }
-
+    additionalDetails.style.display = additionalDetails.style.display === "none" ? "block" : "none";
   });
-
-  // function viewDetails(details) {
-  //   resultGrid.innerHTML += `
-  //     <div class="movie-info">
-  //       <ul class="movie-misc-info">
-  //       </ul>
-        
-  //     </div>
-  //   `;
-  // }
 }
 
 movieSearchBox.addEventListener("input", function () {
